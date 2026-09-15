@@ -7,7 +7,7 @@ const PORT = 3000;
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello world" });
 });
-const jobs = [
+let jobs = [
   {
     id: 1,
     company: "Google",
@@ -29,6 +29,11 @@ app.post("/api/addJob", (req, res) => {
   const job = req.body;
   jobs.push(job);
   res.status(201).json(job);
+});
+app.delete("/api/deleteJob/:id", (req, res) => {
+  const id = Number(req.params.id);
+  jobs = jobs.filter((job) => job.id !== id);
+  res.status(200).json({ message: "job deleted", id });
 });
 
 app.listen(PORT, () => {

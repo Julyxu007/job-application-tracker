@@ -29,7 +29,11 @@ function App() {
       .then((newJob) => setJobs([...jobs, newJob]))
       .then(() => setNewJob({ company: "", title: "", applicationStatus: "" }));
   };
-
+  const deleteJob = (id: number) => {
+    fetch(`http://localhost:3000/api/deleteJob/${id}`, { method: "DELETE" })
+      .then((response) => response.json())
+      .then(() => setJobs(jobs.filter((job) => job.id !== id)));
+  };
   return (
     <div>
       <h1>Jobs</h1>
@@ -37,6 +41,9 @@ function App() {
         {jobs.map((job) => (
           <li key={job.id}>
             {job.company} {job.title} {job.applicationStatus}
+            <button type="button" onClick={() => deleteJob(job.id)}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>
