@@ -36,6 +36,17 @@ app.delete("/api/deleteJob/:id", (req, res) => {
   res.status(200).json({ message: "job deleted", id });
 });
 
+app.put("/api/updateStatus/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const { applicationStatus } = req.body;
+  const job = jobs.find((job) => job.id === id);
+  if (!job) {
+    return res.status(404).json({ message: "job not found" });
+  }
+  job.applicationStatus = applicationStatus;
+  res.status(200).json(job);
+});
+
 app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);
 });

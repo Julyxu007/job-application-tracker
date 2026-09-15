@@ -34,13 +34,39 @@ function App() {
       .then((response) => response.json())
       .then(() => setJobs(jobs.filter((job) => job.id !== id)));
   };
+
+  const updateStatus = (id: number, newStatus: string) => {
+    fetch(`http://localhost:3000/api/updateStatus/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        applicationStatus: newStatus,
+      }),
+    })
+      .then((response) => response.json())
+      .then((updatedJob) =>
+        setJobs(jobs.map((job) => (job.id === id ? updatedJob : job))),
+      );
+  };
   return (
     <div>
       <h1>Jobs</h1>
       <ul>
         {jobs.map((job) => (
           <li key={job.id}>
-            {job.company} {job.title} {job.applicationStatus}
+            {job.company}
+            {job.title}
+            <select
+              value={job.applicationStatus}
+              onChange={(e) => updateStatus(job.id, e.target.value)}
+            >
+              <option value="applied">Applied</option>
+              <option value="interview">Interview</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Rejected</option>
+            </select>
             <button type="button" onClick={() => deleteJob(job.id)}>
               Delete
             </button>
