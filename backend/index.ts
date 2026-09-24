@@ -56,6 +56,49 @@ app.put("/api/updateApplicationStatus/:id", async (req, res) => {
   }
 });
 
+app.get("/api/job/:jobId/interviews", async (req, res) => {
+  try {
+    const jobId = Number(req.params.jobId);
+    const result = await pool.query(
+      `SELECT * FROM interviews where job_id = $1`,
+      [jobId],
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      message: "internal server error",
+    });
+  }
+});
+app.get("/api/interviews", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM interviews ORDER BY id DESC`,
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({
+      message: "internal server error",
+    });
+  }
+});
+app.post("/api/job/:jobId/addNewInterview", async (req, res) => {
+  try {
+    const jobId = Number(req.params.jobId);
+    const { round, date, note } = req.body;
+    const result = await pool.query(
+      `INSERT INTO interviews(job_id,round,date,note) VALUES($1,$2,$3,$4) RETURNING *`,
+      [jobId, round, date, note],
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "internal server error",
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);
 });

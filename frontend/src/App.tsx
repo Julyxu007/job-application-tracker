@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
+const API_BASE = "http://localhost:3000";
 interface job {
   id: number;
   company: string;
@@ -13,11 +14,15 @@ interface job {
 function App() {
   const [jobs, setJobs] = useState<job[]>([]);
   useEffect(() => {
-    fetch("http://localhost:3000/api/jobs")
+    fetch(`${API_BASE}/api/jobs`)
       .then((res) => res.json())
       .then((data) => setJobs(data));
   }, []);
-
+  useEffect(() => {
+    fetch(`${API_BASE}/api/interviews`)
+      .then((res) => res.json())
+      .then((data) => setInterview(data));
+  }, []);
   const [newApplication, setNewApplication] = useState({
     company: "",
     title: "",
@@ -27,7 +32,7 @@ function App() {
   });
   const addNewApplication = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/addApplication", {
+      const response = await fetch(`${API_BASE}/api/addApplication`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,19 +66,16 @@ function App() {
   };
 
   const deleteApplication = async (id: number) => {
-    const response = await fetch(
-      `http://localhost:3000/api/deleteApplication/${id}`,
-      {
-        method: "DELETE",
-      },
-    );
+    const response = await fetch(`${API_BASE}/api/deleteApplication/${id}`, {
+      method: "DELETE",
+    });
     const result = await response.json();
     console.log(result.message);
     setJobs(jobs.filter((job) => job.id !== id));
   };
   const updateApplicationStatus = async (id: number, status: string) => {
     const response = await fetch(
-      `http://localhost:3000/api/updateApplicationStatus/${id}`,
+      `${API_BASE}/api/updateApplicationStatus/${id}`,
       {
         method: "PUT",
         headers: {
@@ -84,6 +86,69 @@ function App() {
     );
     const data = await response.json();
     setJobs(jobs.map((job) => (job.id === id ? data : job)));
+  };
+
+  interface Interview {
+    id: number;
+    job_id: number;
+    round: number;
+    date: string;
+    note: string;
+  }
+
+  const [interview, setInterview] = useState<Interview[]>([]);
+  // const getInterviews = async (jobId: number) => {
+  //   const response = await fetch(`${API_BASE}/api/job/${jobId}/interviews`);
+  //   const data = await response.json();
+  //   setInterview([...interview, ...data]);
+  // };
+
+  const [newInterview, setNewInterview] = useState<{
+    [jobId: number]: {
+      round: number;
+      date: string;
+      note: string;
+    };
+  }>({});
+  const addNewInterview = async (jobId: number) => {
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/job/${jobId}/addNewInterview`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newInterview[jobId]),
+        },
+      );
+      const data = await response.json();
+      setInterview([...interview, data]);
+      setNewInterview({
+        ...newInterview,
+        [jobId]: {
+          round: 0,
+          date: "",
+          note: "",
+        },
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleInterviewInputChange = (
+    jobId: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setNewInterview({
+      ...newInterview,
+      [jobId]: {
+        ...newInterview[jobId],
+        [name]: value,
+      },
+    });
   };
   return (
     <div>
@@ -109,6 +174,53 @@ function App() {
             <button onClick={async () => await deleteApplication(job.id)}>
               Delete
             </button>
+
+            {job.status === "Interviewing" && (
+              <div>
+                <h2>Interview records</h2>
+                <ul>
+                  {interview
+                    .filter((iv) => iv.job_id === job.id)
+                    .map((iv) => (
+                      <li key={iv.id}>
+                        <span>round:{iv.round}</span>
+                        <span>date:{iv.date}</span>
+                        <span>note:{iv.note}</span>
+                      </li>
+                    ))}
+                </ul>
+                <div>
+                  <label htmlFor="round">Interview Round</label>
+                  <input
+                    type="number"
+                    id="round"
+                    name="round"
+                    value={newInterview[job.id]?.round ?? ""}
+                    onChange={(e) => handleInterviewInputChange(job.id, e)}
+                  />
+                  <label htmlFor="date">Interview Date</label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={newInterview[job.id]?.date ?? ""}
+                    onChange={(e) => handleInterviewInputChange(job.id, e)}
+                  />
+
+                  <label htmlFor="note">Note</label>
+                  <input
+                    type="text"
+                    id="note"
+                    name="note"
+                    value={newInterview[job.id]?.note ?? ""}
+                    onChange={(e) => handleInterviewInputChange(job.id, e)}
+                  />
+                  <button onClick={() => addNewInterview(job.id)}>
+                    Add new Interview
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
